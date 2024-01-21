@@ -15,7 +15,7 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
     def parse(self, response):
         for quote in response.xpath("/html//div[@class='quote']"):
             quote_data = {
-                "keywords": quote.xpath("div[@class='tags']/a/text()").extract(),
+                "tags": quote.xpath("div[@class='tags']/a/text()").extract(),
                 "author": quote.xpath("span/small/text()").extract_first(),
                 "quote": quote.xpath("span[@class='text']/text()").get()
             }
@@ -35,8 +35,8 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
 
     def closed(self, reason):
         authors_data = [{'fullname': author} for author in self.authors]
-        with open('authors.json', 'a') as authors_file:
+        with open('authors.json', 'w') as authors_file:
             json.dump(authors_data, authors_file, indent=2)
 
-        with open('quotes.json', 'a') as quotes_file:
+        with open('quotes.json', 'w') as quotes_file:
             json.dump(self.quotes, quotes_file, indent=2)
