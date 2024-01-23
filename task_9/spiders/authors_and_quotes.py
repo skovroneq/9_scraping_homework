@@ -1,5 +1,6 @@
 import scrapy
 import json
+import os
 
 
 class AuthorsAndQuotesSpider(scrapy.Spider):
@@ -35,6 +36,14 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
 
     def closed(self, reason):
         authors_data = [{'fullname': author} for author in self.authors]
+        authors_file_path = 'authors.json'
+        quotes_file_path = 'quotes.json'
+
+        if os.path.exists(authors_file_path):
+            os.remove(authors_file_path)
+        if os.path.exists(quotes_file_path):
+            os.remove(quotes_file_path)
+
         with open('authors.json', 'w') as authors_file:
             json.dump(authors_data, authors_file, indent=2)
 
