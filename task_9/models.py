@@ -3,6 +3,9 @@ from mongoengine import Document, StringField, ListField, ReferenceField, CASCAD
 
 class Author(Document):
     fullname = StringField(required=True)
+    born_date = StringField()
+    born_location = StringField()
+    description = StringField()
 
 
 class Quote(Document):

@@ -12,12 +12,13 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
         super(AuthorsAndQuotesSpider, self).__init__(*args, **kwargs)
         self.authors = set()
         self.quotes = []
+        self.author_details = {}
 
     def parse(self, response):
-        for quote in response.xpath("/html//div[@class='quote']"):
+        for quote in response.xpath("//div[@class='quote']"):
             quote_data = {
                 "tags": quote.xpath("div[@class='tags']/a/text()").extract(),
-                "author": quote.xpath("span/small/text()").extract_first(),
+                "author": quote.xpath("span/small[@class='author']/text()").get(),
                 "quote": quote.xpath("span[@class='text']/text()").get()
             }
 
@@ -28,14 +29,44 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
             self.quotes.append(quote_data)
             self.authors.add(quote_data['author'])
 
+            author_link = "-".join(part.strip(".")
+                                   for part in quote_data['author'].replace(".", " ").split())
+            author_page_link = f"https://quotes.toscrape.com/author/{author_link}"
+
+            if author_page_link:
+                yield scrapy.Request(url=response.urljoin(author_page_link), callback=self.parse_author_about)
+
             yield quote_data
 
         next_link = response.xpath("//li[@class='next']/a/@href").get()
         if next_link:
             yield scrapy.Request(url=self.start_urls[0] + next_link)
 
+    def parse_author_about(self, response):
+        author_name = response.xpath(
+            "//h3[@class='author-title']/text()").get()
+        born_date = response.xpath(
+            "//span[@class='author-born-date']/text()").get()
+        born_location = response.xpath(
+            "//span[@class='author-born-location']/text()").get()
+        description = response.xpath(
+            "//div[@class='author-description']/text()").get().strip()
+
+        self.author_details[author_name] = {
+            "born_date": born_date,
+            "born_location": born_location,
+            "description": description
+        }
+
     def closed(self, reason):
-        authors_data = [{'fullname': author} for author in self.authors]
+        authors_data = []
+
+        for author_name in self.authors:
+            basic_info = {'fullname': author_name}
+            additional_info = self.author_details.get(author_name, {})
+            author_data = {**basic_info, **additional_info}
+            authors_data.append(author_data)
+
         authors_file_path = 'authors.json'
         quotes_file_path = 'quotes.json'
 
