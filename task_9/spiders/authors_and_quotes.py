@@ -29,9 +29,9 @@ class AuthorsAndQuotesSpider(scrapy.Spider):
             self.quotes.append(quote_data)
             self.authors.add(quote_data['author'])
 
-            author_link = "-".join(part.strip(".")
-                                   for part in quote_data['author'].replace(".", " ").split())
-            author_page_link = f"https://quotes.toscrape.com/author/{author_link}"
+            author_link = quote.xpath(
+                "span/a[contains(@href, \"author\")]/@href").get()
+            author_page_link = f"https://quotes.toscrape.com/{author_link}"
 
             if author_page_link:
                 yield scrapy.Request(url=response.urljoin(author_page_link), callback=self.parse_author_about)
