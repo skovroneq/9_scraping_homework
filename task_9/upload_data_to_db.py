@@ -25,9 +25,13 @@ def upload_authors_to_db():
     connect_to_mongodb()
 
     for author_data in authors_data:
-        author = Author(**author_data)
-        author.save()
-        
+        author_name = author_data['fullname']
+        existing_author = Author.objects(fullname=author_name).first()
+
+        if not existing_author:
+            author = Author(**author_data)
+            author.save()
+
 
 def upload_quotes_to_db():
     with open('quotes.json', 'r') as file:
